@@ -97,8 +97,8 @@ pub struct AppMeta {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
     pub data: Option<T>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
-    pub locale: Option<String>,
 }
 
 impl<T> ApiResponse<T> {
@@ -106,7 +106,6 @@ impl<T> ApiResponse<T> {
         Self {
             data: Some(data),
             error: None,
-            locale: Some("zh-cn".to_string()),
         }
     }
 
@@ -114,7 +113,6 @@ impl<T> ApiResponse<T> {
         Self {
             data: None,
             error: Some(msg.to_string()),
-            locale: Some("zh-cn".to_string()),
         }
     }
 }

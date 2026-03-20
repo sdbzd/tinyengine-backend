@@ -56,7 +56,7 @@ pub struct UpdateBlockRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct BlockCategory {
+pub struct BlockCategoryRow {
     pub id: i32,
     pub code: String,
     pub name: String,
@@ -71,6 +71,41 @@ pub struct BlockCategory {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BlockCategory {
+    pub id: i32,
+    pub code: String,
+    pub name: String,
+    pub business_group: Option<String>,
+    pub blocks: Vec<serde_json::Value>,
+    pub tenant_id: Option<String>,
+    pub renter_id: Option<String>,
+    pub site_id: Option<String>,
+    pub created_by: String,
+    pub created_time: DateTime<Utc>,
+    pub last_updated_by: String,
+    pub last_updated_time: DateTime<Utc>,
+}
+
+impl From<BlockCategoryRow> for BlockCategory {
+    fn from(row: BlockCategoryRow) -> Self {
+        Self {
+            id: row.id,
+            code: row.code,
+            name: row.name,
+            business_group: row.business_group,
+            blocks: Vec::new(),
+            tenant_id: row.tenant_id,
+            renter_id: row.renter_id,
+            site_id: row.site_id,
+            created_by: row.created_by,
+            created_time: row.created_time,
+            last_updated_by: row.last_updated_by,
+            last_updated_time: row.last_updated_time,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateBlockCategoryRequest {
     pub code: String,
     pub name: String,
@@ -78,7 +113,7 @@ pub struct CreateBlockCategoryRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct BlockGroup {
+pub struct BlockGroupRow {
     pub id: i32,
     pub name: String,
     pub description: Option<String>,
@@ -91,4 +126,41 @@ pub struct BlockGroup {
     pub created_time: DateTime<Utc>,
     pub last_updated_by: String,
     pub last_updated_time: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BlockGroup {
+    pub id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub blocks: Vec<serde_json::Value>,
+    pub app_id: i32,
+    pub platform_id: i32,
+    pub tenant_id: Option<String>,
+    pub renter_id: Option<String>,
+    pub site_id: Option<String>,
+    pub created_by: String,
+    pub created_time: DateTime<Utc>,
+    pub last_updated_by: String,
+    pub last_updated_time: DateTime<Utc>,
+}
+
+impl From<BlockGroupRow> for BlockGroup {
+    fn from(row: BlockGroupRow) -> Self {
+        Self {
+            id: row.id,
+            name: row.name,
+            description: row.description,
+            blocks: Vec::new(),
+            app_id: row.app_id,
+            platform_id: row.platform_id,
+            tenant_id: row.tenant_id,
+            renter_id: row.renter_id,
+            site_id: row.site_id,
+            created_by: row.created_by,
+            created_time: row.created_time,
+            last_updated_by: row.last_updated_by,
+            last_updated_time: row.last_updated_time,
+        }
+    }
 }

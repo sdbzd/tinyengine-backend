@@ -3,7 +3,7 @@ use axum::{
     Json,
 };
 use sqlx::{MySqlPool, Row};
-use crate::api::models::{Block, ApiResponse, CreateBlockRequest, UpdateBlockRequest, BlockCategory, CreateBlockCategoryRequest, BlockGroup};
+use crate::api::models::{Block, ApiResponse, CreateBlockRequest, UpdateBlockRequest, BlockCategory, CreateBlockCategoryRequest, BlockGroup, BlockGroupRow, BlockCategoryRow};
 use crate::error::{AppError, Result};
 
 pub async fn create_block(
@@ -134,11 +134,32 @@ pub async fn create_block_category(
 pub async fn list_block_categories(
     State(pool): State<MySqlPool>,
 ) -> Result<Json<ApiResponse<Vec<BlockCategory>>>> {
-    let categories = sqlx::query_as::<_, BlockCategory>(
+    let rows = sqlx::query_as::<_, BlockCategoryRow>(
         "SELECT * FROM t_business_category ORDER BY id ASC"
     )
     .fetch_all(&pool)
     .await?;
+
+    let mut categories: Vec<BlockCategory> = Vec::new();
+    for row in rows {
+        let mut category = BlockCategory::from(row);
+        
+        let material_ids: Vec<(i32,)> = sqlx::query_as(
+            "SELECT material_id FROM r_material_category WHERE category_id = ?"
+        )
+        .bind(category.id)
+        .fetch_all(&pool)
+        .await?;
+
+        let mut blocks: Vec<serde_json::Value> = Vec::new();
+        for (material_id,) in material_ids {
+            if let Ok(block) = get_block_by_id(&pool, material_id).await {
+                blocks.push(serde_json::to_value(block).unwrap_or_default());
+            }
+        }
+        category.blocks = blocks;
+        categories.push(category);
+    }
 
     Ok(Json(ApiResponse::success(categories)))
 }
@@ -183,11 +204,12 @@ async fn get_block_by_id(pool: &MySqlPool, id: i32) -> Result<Block> {
 }
 
 async fn get_category_by_id(pool: &MySqlPool, id: i32) -> Result<BlockCategory> {
-    sqlx::query_as::<_, BlockCategory>("SELECT * FROM t_business_category WHERE id = ?")
+    let row = sqlx::query_as::<_, BlockCategoryRow>("SELECT * FROM t_business_category WHERE id = ?")
         .bind(id)
         .fetch_optional(pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Block category {} not found", id)))
+        .ok_or_else(|| AppError::NotFound(format!("Block category {} not found", id)))?;
+    Ok(BlockCategory::from(row))
 }
 
 pub async fn list_block_groups(
@@ -198,12 +220,33 @@ pub async fn list_block_groups(
         .and_then(|v| v.parse::<i32>().ok())
         .unwrap_or(1);
     
-    let groups = sqlx::query_as::<_, BlockGroup>(
+    let rows = sqlx::query_as::<_, BlockGroupRow>(
         "SELECT * FROM t_block_group WHERE app_id = ? ORDER BY id ASC"
     )
     .bind(app_id)
     .fetch_all(&pool)
     .await?;
 
-    Ok(Json(ApiResponse::success(groups)))
+    let mut result_groups: Vec<BlockGroup> = Vec::new();
+    for row in rows {
+        let mut group = BlockGroup::from(row);
+        
+        let block_ids: Vec<(i32,)> = sqlx::query_as(
+            "SELECT block_id FROM r_block_group_block WHERE block_group_id = ?"
+        )
+        .bind(group.id)
+        .fetch_all(&pool)
+        .await?;
+
+        let mut blocks: Vec<serde_json::Value> = Vec::new();
+        for (block_id,) in block_ids {
+            if let Ok(block) = get_block_by_id(&pool, block_id).await {
+                blocks.push(serde_json::to_value(block).unwrap_or_default());
+            }
+        }
+        group.blocks = blocks;
+        result_groups.push(group);
+    }
+
+    Ok(Json(ApiResponse::success(result_groups)))
 }

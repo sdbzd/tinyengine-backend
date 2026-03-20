@@ -63,21 +63,63 @@ CI=true pnpm install
 # 构建插件
 CI=true pnpm run build:plugin
 
-# 构建生产版本
+# 构建生产版本（可选，用于部署）
 CI=true pnpm run build:alpha
 ```
 
-### 启动前端
+### 启动前端（开发模式 - 推荐）
+
+**开发服务器会自动代理 API 请求到后端：**
 
 ```bash
 cd tiny-engine/designer-demo
 
-# 方式一：使用 serve
+# 启动开发服务器（端口 8090，有代理配置）
+pnpm dev
+```
+
+访问：`http://localhost:8090/?type=app&id=1&tenant=1&pageid=1`
+
+### 启动前端（生产模式）
+
+如果需要使用生产构建，必须配置 API 代理：
+
+```bash
+cd tiny-engine/designer-demo
+
+# 方式一：使用 serve + 代理插件
 npx serve -l 8091 -s dist
 
-# 方式二：简单 Node 服务器
-node -e "const http=require('http'),fs=require('fs'),p=require('path');const m={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json'};http.createServer((r,s)=>{let f=p.join('./dist',r.url==='/'?'index.html':r.url);if(!fs.existsSync(f))f=p.join('./dist','index.html');s.writeHead(200,{'Content-Type':m[p.extname(f)]||'application/octet-stream'});s.end(fs.readFileSync(f))}).listen(8091,()=>console.log('8091'))"
+# 方式二：使用 Node 服务器手动代理
+node -e "
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { createServer } = require('http-proxy');
+
+// 创建代理服务器
+const proxy = createServer({});
+proxy.on('error', (err, req, res) => { res.writeHead(500); res.end('Proxy error'); });
+
+// 创建静态文件服务器
+const mime = {'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json'};
+const server = http.createServer((req, res) => {
+  // 代理 API 请求
+  if (req.url.startsWith('/app-center') || req.url.startsWith('/material-center') || req.url.startsWith('/platform-center')) {
+    proxy.web(req, res, { target: 'http://127.0.0.1:8080' });
+    return;
+  }
+  // 静态文件
+  let file = path.join('./dist', req.url === '/' ? 'index.html' : req.url);
+  if (!fs.existsSync(file)) file = path.join('./dist', 'index.html');
+  res.writeHead(200, {'Content-Type': mime[path.extname(file)] || 'application/octet-stream'});
+  res.end(fs.readFileSync(file));
+});
+server.listen(8091, () => console.log('Server on 8091'));
+"
 ```
+
+**重要：生产构建需要额外的代理配置，因为 Vite 代理只在开发模式生效。**
 
 ### 配置代理（重要）
 
