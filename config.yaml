@@ -1,0 +1,22 @@
+database:
+  host: "localhost"
+  port: 3306
+  username: "root"
+  password: "password"
+  name: "tinyengine"
+  max_connections: 10
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+
+app:
+  host: "0.0.0.0"
+  port: 8080
+  env: "development"
+
+log:
+  level: "info"
+  format: "json"

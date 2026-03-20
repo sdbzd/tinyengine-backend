@@ -1,0 +1,18 @@
+# Rust build output
+/target
+**/target/
+
+# Cargo
+Cargo.lock
+**/Cargo.lock
+
+# Backup files
+*.rs.bk
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+*.db
