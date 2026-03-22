@@ -22,27 +22,38 @@ pub enum AppError {
 
     #[error("Unauthorized")]
     Unauthorized,
+
+    #[error("Bad request: {0}")]
+    BadRequest(String),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let (status, message) = match &self {
+        let (status, code, message) = match &self {
             AppError::Database(e) => {
                 tracing::error!("Database error: {:?}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Database error occurred")
+                (StatusCode::INTERNAL_SERVER_ERROR, "CM001", "数据库错误")
             }
-            AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg.as_str()),
-            AppError::Validation(msg) => (StatusCode::BAD_REQUEST, msg.as_str()),
+            AppError::NotFound(msg) => (StatusCode::NOT_FOUND, "CM009", msg.as_str()),
+            AppError::Validation(msg) => (StatusCode::BAD_REQUEST, "CM002", msg.as_str()),
             AppError::Internal(msg) => {
                 tracing::error!("Internal error: {}", msg);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error")
+                (StatusCode::INTERNAL_SERVER_ERROR, "CM001", "内部服务器错误")
             }
-            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized"),
+            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "CM003", "未授权"),
+            AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, "CM004", msg.as_str()),
         };
 
         let body = Json(json!({
-            "error": message,
-            "data": null
+            "data": null,
+            "code": code,
+            "message": message,
+            "isSuccess": false,
+            "error": {
+                "code": code,
+                "message": message
+            },
+            "errMsg": message
         }));
 
         (status, body).into_response()

@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct App {
+    #[serde(rename = "appId")]
     pub id: i32,
     pub name: String,
     pub platform_id: i32,
@@ -94,25 +96,107 @@ pub struct AppMeta {
     pub version: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Platform {
+    pub id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub theme_id: Option<i32>,
+    pub material_history_id: Option<i32>,
+    pub business_category_id: Option<i32>,
+    pub tenant_id: Option<String>,
+    pub renter_id: Option<String>,
+    pub site_id: Option<String>,
+    pub created_by: String,
+    pub last_updated_by: String,
+    pub created_time: DateTime<Utc>,
+    pub last_updated_time: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Tenant {
+    pub id: i32,
+    pub org_code: String,
+    pub name: String,
+    pub enabled: Option<i8>,
+    pub tenant_id: Option<String>,
+    pub renter_id: Option<String>,
+    pub site_id: Option<String>,
+    pub created_by: Option<String>,
+    pub last_updated_by: Option<String>,
+    pub created_time: DateTime<Utc>,
+    pub last_updated_time: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct User {
+    pub id: i32,
+    pub username: String,
+    pub email: Option<String>,
+    pub role: String,
+    pub enable: Option<i8>,
+    pub tenant_id: Option<String>,
+    pub renter_id: Option<String>,
+    pub site_id: Option<String>,
+    pub created_by: String,
+    pub last_updated_by: String,
+    pub created_time: DateTime<Utc>,
+    pub last_updated_time: DateTime<Utc>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ApiResponse<T> {
     pub data: Option<T>,
+    pub code: String,
+    pub message: String,
+    pub is_success: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
+    pub error: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub err_msg: Option<String>,
 }
 
 impl<T> ApiResponse<T> {
     pub fn success(data: T) -> Self {
         Self {
             data: Some(data),
+            code: "200".to_string(),
+            message: "操作成功".to_string(),
+            is_success: true,
             error: None,
+            err_msg: None,
         }
     }
 
-    pub fn error(msg: &str) -> Self {
+    pub fn success_with_message(data: T, message: &str) -> Self {
         Self {
-            data: None,
-            error: Some(msg.to_string()),
+            data: Some(data),
+            code: "200".to_string(),
+            message: message.to_string(),
+            is_success: true,
+            error: None,
+            err_msg: None,
         }
     }
+
+    pub fn failed(error_code: &str, message: &str) -> Self {
+        Self {
+            data: None,
+            code: error_code.to_string(),
+            message: message.to_string(),
+            is_success: false,
+            error: Some(serde_json::json!({
+                "code": error_code,
+                "message": message
+            })),
+            err_msg: Some(message.to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppPageResponse {
+    pub apps: Vec<App>,
+    pub total: i64,
 }

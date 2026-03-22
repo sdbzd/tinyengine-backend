@@ -53,19 +53,17 @@ async fn main() -> anyhow::Result<()> {
         .allow_headers(Any);
 
     let app_router = api::routes::create_app_router(pool.clone());
-    let v1_app_router = api::routes::create_v1_app_router(pool.clone());
-    let page_router = api::routes::create_page_router(pool.clone());
-    let block_router = api::routes::create_block_router(pool.clone());
-    let schema2code_router = api::routes::create_schema2code_router();
+    let material_router = api::routes::create_material_router(pool.clone());
     let platform_router = api::routes::create_platform_router(pool.clone());
+    let schema2code_router = api::routes::create_schema2code_router();
+    let v1_app_router = api::routes::create_v1_app_router(pool.clone());
 
     let app = Router::new()
         .nest("/app-center/api", app_router)
         .nest("/app-center/v1/api", v1_app_router)
-        .nest("/app-center/api", page_router)
-        .nest("/material-center/api", block_router)
+        .nest("/material-center/api", material_router)
+        .nest("/platform-center/api", platform_router)
         .nest("/material-center/api", schema2code_router)
-        .nest("/platform-center", platform_router)
         .layer(TraceLayer::new_for_http())
         .layer(cors);
 

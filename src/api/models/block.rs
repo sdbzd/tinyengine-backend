@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct Block {
     pub id: i32,
     pub label: String,
@@ -19,6 +20,7 @@ pub struct Block {
     pub path: Option<String>,
     pub occupier_by: Option<String>,
     pub is_official: Option<i8>,
+    #[sqlx(rename = "public")]
     pub public: Option<i32>,
     pub is_default: Option<i8>,
     pub tiny_reserved: Option<i8>,
@@ -58,7 +60,7 @@ pub struct UpdateBlockRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct BlockCategoryRow {
     pub id: i32,
-    pub code: String,
+    pub code: Option<String>,
     pub name: String,
     pub business_group: Option<String>,
     pub tenant_id: Option<String>,
@@ -71,11 +73,13 @@ pub struct BlockCategoryRow {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockCategory {
     pub id: i32,
-    pub code: String,
+    pub code: Option<String>,
     pub name: String,
     pub business_group: Option<String>,
+    #[serde(default)]
     pub blocks: Vec<serde_json::Value>,
     pub tenant_id: Option<String>,
     pub renter_id: Option<String>,
@@ -117,8 +121,8 @@ pub struct BlockGroupRow {
     pub id: i32,
     pub name: String,
     pub description: Option<String>,
-    pub app_id: i32,
-    pub platform_id: i32,
+    pub app_id: Option<i32>,
+    pub platform_id: Option<i32>,
     pub tenant_id: Option<String>,
     pub renter_id: Option<String>,
     pub site_id: Option<String>,
@@ -129,13 +133,15 @@ pub struct BlockGroupRow {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockGroup {
     pub id: i32,
     pub name: String,
     pub description: Option<String>,
+    #[serde(default)]
     pub blocks: Vec<serde_json::Value>,
-    pub app_id: i32,
-    pub platform_id: i32,
+    pub app_id: Option<i32>,
+    pub platform_id: Option<i32>,
     pub tenant_id: Option<String>,
     pub renter_id: Option<String>,
     pub site_id: Option<String>,

@@ -6,7 +6,7 @@ authors = ["TinyEngine Team"]
 description = "Rust backend for TinyEngine low-code platform"
 
 [workspace]
-members = []
+members = ["embedding"]
 
 [dependencies]
 # Web framework
@@ -40,6 +40,7 @@ validator = { version = "0.18", features = ["derive"] }
 
 # Async utilities
 futures = "0.3"
+tiny-engine-embedding = { path = "embedding" }
 
 [dev-dependencies]
 tokio-test = "0.4"

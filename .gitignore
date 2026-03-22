@@ -16,3 +16,8 @@ Cargo.lock
 *.log
 
 *.db
+
+*.onnx
+*.json
+
+*.out
